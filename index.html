@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FreeCloud - Static File Hosting</title>
+    <title>FreeCloud - Free File Hosting</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
@@ -87,6 +87,10 @@
         .toast {
             transition: all 0.3s ease;
         }
+        .storage-bar {
+            height: 8px;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900">
@@ -97,13 +101,6 @@
         </button>
     </div>
 
-    <!-- Theme Toggle -->
-    <div class="fixed top-4 right-4 z-50">
-        <button id="themeToggle" class="p-2 rounded-full bg-white dark:bg-gray-800 shadow-md">
-            <i id="themeIcon" class="fas fa-moon text-gray-700 dark:text-yellow-400"></i>
-        </button>
-    </div>
-
     <!-- Sidebar -->
     <div id="sidebar" class="sidebar w-64 bg-white dark:bg-gray-800 shadow-lg fixed h-full">
         <div class="p-4 border-b border-gray-200 dark:border-gray-700">
@@ -111,37 +108,51 @@
                 <i class="fas fa-cloud text-3xl text-blue-500 dark:text-indigo-400"></i>
                 <h1 class="text-xl font-bold text-gray-800 dark:text-white">FreeCloud</h1>
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Static File Hosting Demo</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Free File Hosting</p>
         </div>
         
         <div class="p-4">
             <div class="mb-6">
                 <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
                     <div class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium text-blue-700 dark:text-blue-300">Demo Notice</span>
+                        <span class="text-sm font-medium text-blue-700 dark:text-blue-300">Daily Gift</span>
+                        <span class="text-xs font-bold text-blue-600 dark:text-blue-300">10 GB FREE</span>
                     </div>
-                    <p class="text-xs text-blue-600 dark:text-blue-300">This is a static demo. File uploads are simulated in browser.</p>
+                    <p class="text-xs text-blue-600 dark:text-blue-300">Claim your 10GB daily storage - No limits!</p>
+                    <button id="claimStorageBtn" class="w-full mt-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded">
+                        Claim Now
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mb-6 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div class="flex justify-between mb-1">
+                    <span class="text-xs text-gray-600 dark:text-gray-300">Storage Used</span>
+                    <span id="storageUsed" class="text-xs font-medium text-gray-700 dark:text-gray-300">0 GB / 10 GB</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                    <div id="storageBar" class="bg-green-500 dark:bg-green-400 h-2 rounded-full storage-bar" style="width: 0%"></div>
                 </div>
             </div>
             
             <nav class="space-y-1">
-                <a href="#" class="flex items-center space-x-3 p-2 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300">
+                <a href="#" class="nav-link flex items-center space-x-3 p-2 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300" data-page="files">
                     <i class="fas fa-home w-5"></i>
                     <span>My Files</span>
                 </a>
-                <a href="#" class="flex items-center space-x-3 p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                <a href="#" class="nav-link flex items-center space-x-3 p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" data-page="upload">
                     <i class="fas fa-upload w-5"></i>
                     <span>Upload</span>
                 </a>
-                <a href="#" class="flex items-center space-x-3 p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                <a href="#" class="nav-link flex items-center space-x-3 p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" data-page="shared">
                     <i class="fas fa-share-alt w-5"></i>
                     <span>Shared</span>
                 </a>
-                <a href="#" class="flex items-center space-x-3 p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                <a href="#" class="nav-link flex items-center space-x-3 p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" data-page="starred">
                     <i class="fas fa-star w-5"></i>
                     <span>Starred</span>
                 </a>
-                <a href="#" class="flex items-center space-x-3 p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                <a href="#" class="nav-link flex items-center space-x-3 p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" data-page="trash">
                     <i class="fas fa-trash w-5"></i>
                     <span>Trash</span>
                 </a>
@@ -168,11 +179,14 @@
         
         <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700">
             <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">U</div>
+                <div id="userAvatar" class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">G</div>
                 <div>
-                    <p class="text-sm font-medium dark:text-white">User</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Demo Account</p>
+                    <p id="userName" class="text-sm font-medium dark:text-white">Guest User</p>
+                    <p id="userStatus" class="text-xs text-gray-500 dark:text-gray-400">Free Account</p>
                 </div>
+                <button id="userMenuBtn" class="ml-auto text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -182,8 +196,13 @@
         <!-- Header -->
         <header class="bg-white dark:bg-gray-800 shadow-sm">
             <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-                <h1 class="text-xl font-bold text-gray-800 dark:text-white">My Files</h1>
+                <h1 id="pageTitle" class="text-xl font-bold text-gray-800 dark:text-white">My Files</h1>
                 <div class="flex items-center space-x-4">
+                    <!-- Theme Toggle -->
+                    <button id="themeToggle" class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600">
+                        <i id="themeIcon" class="fas fa-moon"></i>
+                    </button>
+                    
                     <div class="relative">
                         <input type="text" placeholder="Search files..." class="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-white">
                         <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
@@ -191,18 +210,35 @@
                     <button class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600">
                         <i class="fas fa-bell"></i>
                     </button>
+                    
+                    <!-- User Actions -->
+                    <div class="relative">
+                        <button id="userActionsBtn" class="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-1.5 rounded-md">
+                            <i class="fas fa-user-circle text-blue-500"></i>
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Account</span>
+                            <i class="fas fa-chevron-down text-xs text-gray-500"></i>
+                        </button>
+                        
+                        <div id="userActionsMenu" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 hidden">
+                            <a href="#" id="signInBtn" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Sign In</a>
+                            <a href="#" id="signUpBtn" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Create Account</a>
+                            <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Settings</a>
+                            <a href="#" id="signOutBtn" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">Sign Out</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>
 
-        <!-- File Upload Section -->
-        <div class="file-upload-container">
+        <!-- File Upload Section (Visible on Upload page) -->
+        <div id="uploadSection" class="file-upload-container">
             <div class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
                     <div class="p-6 text-center">
                         <i class="fas fa-cloud-upload-alt text-5xl text-blue-500 dark:text-indigo-400 mb-4"></i>
                         <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Upload Your Files</h2>
-                        <p class="text-gray-600 dark:text-gray-300 mb-6">Drag & drop files here or click to browse (simulated)</p>
+                        <p class="text-gray-600 dark:text-gray-300 mb-6">Drag & drop files here or click to browse</p>
                         
                         <div id="dropZone" class="drop-zone cursor-pointer p-8 mb-6">
                             <input type="file" id="fileInput" class="hidden" multiple>
@@ -210,7 +246,7 @@
                                 <div class="flex flex-col items-center justify-center">
                                     <i class="fas fa-plus-circle text-3xl text-blue-500 dark:text-indigo-400 mb-2"></i>
                                     <p class="text-blue-500 dark:text-indigo-400 font-medium">Select files to upload</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Maximum file size: 10 MB (simulated)</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Maximum file size: 100 MB</p>
                                 </div>
                             </label>
                         </div>
@@ -242,8 +278,8 @@
             </div>
         </div>
 
-        <!-- Files List -->
-        <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        <!-- Files List (Visible on Files page) -->
+        <div id="filesSection" class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
                 <div class="p-6">
                     <div class="flex justify-between items-center mb-6">
@@ -260,9 +296,27 @@
                     
                     <div id="fileList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         <!-- Files will be loaded here -->
-                        <div class="text-center py-8">
+                        <div class="col-span-full text-center py-8">
                             <i class="fas fa-cloud text-3xl text-gray-300 dark:text-gray-600 mb-2"></i>
                             <p class="text-gray-500 dark:text-gray-400">No files uploaded yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Shared Files Section (Visible on Shared page) -->
+        <div id="sharedSection" class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-lg font-bold text-gray-800 dark:text-white">Shared Files</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <div class="col-span-full text-center py-8">
+                            <i class="fas fa-share-alt text-3xl text-gray-300 dark:text-gray-600 mb-2"></i>
+                            <p class="text-gray-500 dark:text-gray-400">No shared files yet</p>
                         </div>
                     </div>
                 </div>
@@ -275,11 +329,86 @@
                 <div class="p-6 md:p-8 flex flex-col md:flex-row items-center justify-between">
                     <div class="mb-4 md:mb-0">
                         <h2 class="text-xl font-bold text-white mb-2">Free Forever - No Strings Attached!</h2>
-                        <p class="text-blue-100">Get unlimited storage in this demo. No subscriptions, no payments!</p>
+                        <p class="text-blue-100">Get 10GB free storage every day. No subscriptions, no payments, ever!</p>
                     </div>
-                    <button class="px-6 py-3 bg-white text-green-600 font-medium rounded-md hover:bg-gray-100">
-                        <i class="fas fa-gift mr-2"></i> Claim Storage
+                    <button id="dailyGiftBtn" class="px-6 py-3 bg-white text-green-600 font-medium rounded-md hover:bg-gray-100">
+                        <i class="fas fa-gift mr-2"></i> Claim Daily 10GB
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sign In Modal -->
+    <div id="signInModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-gray-800 dark:text-white">Sign In to FreeCloud</h3>
+                <button id="closeSignInModal" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                    <input type="email" id="loginEmail" class="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                    <input type="password" id="loginPassword" class="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white">
+                </div>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="rememberMe" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label for="rememberMe" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">Remember me</label>
+                    </div>
+                    <a href="#" class="text-sm text-blue-600 hover:text-blue-500">Forgot password?</a>
+                </div>
+                <button id="loginBtn" class="w-full py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                    Sign In
+                </button>
+                <div class="text-center text-sm text-gray-600 dark:text-gray-400">
+                    Don't have an account? <a href="#" id="showSignUpBtn" class="text-blue-600 hover:text-blue-500">Sign up</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sign Up Modal -->
+    <div id="signUpModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-gray-800 dark:text-white">Create FreeCloud Account</h3>
+                <button id="closeSignUpModal" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
+                    <input type="text" id="signupName" class="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                    <input type="email" id="signupEmail" class="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                    <input type="password" id="signupPassword" class="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm Password</label>
+                    <input type="password" id="signupConfirmPassword" class="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white">
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="terms" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <label for="terms" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">I agree to the <a href="#" class="text-blue-600 hover:text-blue-500">Terms & Conditions</a></label>
+                </div>
+                <button id="signupBtn" class="w-full py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                    Create Account
+                </button>
+                <div class="text-center text-sm text-gray-600 dark:text-gray-400">
+                    Already have an account? <a href="#" id="showSignInBtn" class="text-blue-600 hover:text-blue-500">Sign in</a>
                 </div>
             </div>
         </div>
@@ -297,43 +426,22 @@
     </div>
 
     <script>
-        // Mobile menu toggle
-        document.getElementById('menuToggle').addEventListener('click', function() {
-            document.getElementById('sidebar').classList.toggle('active');
-        });
+        // Initialize variables
+        let filesToUpload = [];
+        let storedFiles = JSON.parse(localStorage.getItem('files')) || [];
+        let usedStorage = parseInt(localStorage.getItem('usedStorage')) || 0;
+        const MAX_STORAGE = 10 * 1024 * 1024 * 1024; // 10 GB in bytes
+        let isSignedIn = localStorage.getItem('isSignedIn') === 'true' || false;
+        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || {
+            name: "Guest User",
+            email: "guest@freecloud.com",
+            initials: "G"
+        };
+        let currentPage = 'files';
 
-        // Theme toggle
-        const themeToggle = document.getElementById('themeToggle');
-        const themeIcon = document.getElementById('themeIcon');
-        const htmlElement = document.documentElement;
-        
-        // Check for saved theme preference or respect OS setting
-        if (localStorage.getItem('theme') === 'dark' || 
-            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            htmlElement.classList.add('dark');
-            themeIcon.classList.remove('fa-moon');
-            themeIcon.classList.add('fa-sun');
-        } else {
-            htmlElement.classList.remove('dark');
-            themeIcon.classList.add('fa-moon');
-            themeIcon.classList.remove('fa-sun');
-        }
-        
-        themeToggle.addEventListener('click', () => {
-            htmlElement.classList.toggle('dark');
-            
-            if (htmlElement.classList.contains('dark')) {
-                themeIcon.classList.remove('fa-moon');
-                themeIcon.classList.add('fa-sun');
-                localStorage.setItem('theme', 'dark');
-            } else {
-                themeIcon.classList.add('fa-moon');
-                themeIcon.classList.remove('fa-sun');
-                localStorage.setItem('theme', 'light');
-            }
-        });
-
-        // File handling
+        // DOM Elements
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
         const fileInput = document.getElementById('fileInput');
         const dropZone = document.getElementById('dropZone');
         const uploadBtn = document.getElementById('uploadBtn');
@@ -346,10 +454,79 @@
         const shareLinkBtn = document.getElementById('shareLinkBtn');
         const toast = document.getElementById('toast');
         const toastMessage = document.getElementById('toastMessage');
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const htmlElement = document.documentElement;
+        const signInBtn = document.getElementById('signInBtn');
+        const signUpBtn = document.getElementById('signUpBtn');
+        const signOutBtn = document.getElementById('signOutBtn');
+        const signInModal = document.getElementById('signInModal');
+        const signUpModal = document.getElementById('signUpModal');
+        const closeSignInModal = document.getElementById('closeSignInModal');
+        const closeSignUpModal = document.getElementById('closeSignUpModal');
+        const loginBtn = document.getElementById('loginBtn');
+        const signupBtn = document.getElementById('signupBtn');
+        const showSignUpBtn = document.getElementById('showSignUpBtn');
+        const showSignInBtn = document.getElementById('showSignInBtn');
+        const userName = document.getElementById('userName');
+        const userAvatar = document.getElementById('userAvatar');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const pageTitle = document.getElementById('pageTitle');
+        const uploadSection = document.getElementById('uploadSection');
+        const filesSection = document.getElementById('filesSection');
+        const sharedSection = document.getElementById('sharedSection');
+        const claimStorageBtn = document.getElementById('claimStorageBtn');
+        const dailyGiftBtn = document.getElementById('dailyGiftBtn');
+        const storageBar = document.getElementById('storageBar');
+        const storageUsed = document.getElementById('storageUsed');
+        const userActionsBtn = document.getElementById('userActionsBtn');
+        const userActionsMenu = document.getElementById('userActionsMenu');
         
-        let filesToUpload = [];
-        let storedFiles = JSON.parse(localStorage.getItem('files')) || [];
-        
+        // Initialize the app
+        function initApp() {
+            updateStorageBar();
+            renderFileList();
+            updateUserUI();
+            setActivePage(currentPage);
+            
+            // Check for saved theme preference or respect OS setting
+            if (localStorage.getItem('theme') === 'dark' || 
+                (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                htmlElement.classList.add('dark');
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+            } else {
+                htmlElement.classList.remove('dark');
+                themeIcon.classList.add('fa-moon');
+                themeIcon.classList.remove('fa-sun');
+            }
+        }
+
+        // Update storage bar
+        function updateStorageBar() {
+            const usedGB = (usedStorage / (1024 * 1024 * 1024)).toFixed(2);
+            const percentage = (usedStorage / MAX_STORAGE) * 100;
+            
+            storageBar.style.width = `${percentage}%`;
+            storageUsed.textContent = `${usedGB} GB / 10 GB`;
+        }
+
+        // Update user UI
+        function updateUserUI() {
+            userName.textContent = currentUser.name;
+            userAvatar.textContent = currentUser.initials;
+            
+            if (isSignedIn) {
+                userAvatar.classList.remove('bg-blue-500');
+                userAvatar.classList.add('bg-green-500');
+                document.getElementById('userStatus').textContent = "Premium Account";
+            } else {
+                userAvatar.classList.remove('bg-green-500');
+                userAvatar.classList.add('bg-blue-500');
+                document.getElementById('userStatus').textContent = "Free Account";
+            }
+        }
+
         // Show toast message
         function showToast(message) {
             toastMessage.textContent = message;
@@ -500,12 +677,219 @@
         // Delete file
         function deleteFile(index) {
             if (confirm(`Are you sure you want to delete ${storedFiles[index].name}?`)) {
+                // Update storage usage
+                usedStorage -= storedFiles[index].size;
+                localStorage.setItem('usedStorage', usedStorage);
+                
+                // Remove file
                 storedFiles.splice(index, 1);
                 localStorage.setItem('files', JSON.stringify(storedFiles));
+                
                 renderFileList();
+                updateStorageBar();
                 showToast('File deleted successfully');
             }
         }
+        
+        // Set active page
+        function setActivePage(page) {
+            currentPage = page;
+            
+            // Update active link in sidebar
+            navLinks.forEach(link => {
+                if (link.dataset.page === page) {
+                    link.classList.add('bg-blue-50', 'dark:bg-blue-900/30', 'text-blue-600', 'dark:text-blue-300');
+                    link.classList.remove('text-gray-600', 'dark:text-gray-300', 'hover:bg-gray-100', 'dark:hover:bg-gray-700');
+                } else {
+                    link.classList.remove('bg-blue-50', 'dark:bg-blue-900/30', 'text-blue-600', 'dark:text-blue-300');
+                    link.classList.add('text-gray-600', 'dark:text-gray-300', 'hover:bg-gray-100', 'dark:hover:bg-gray-700');
+                }
+            });
+            
+            // Update page content
+            switch(page) {
+                case 'files':
+                    pageTitle.textContent = "My Files";
+                    filesSection.classList.remove('hidden');
+                    uploadSection.classList.add('hidden');
+                    sharedSection.classList.add('hidden');
+                    break;
+                case 'upload':
+                    pageTitle.textContent = "Upload Files";
+                    uploadSection.classList.remove('hidden');
+                    filesSection.classList.add('hidden');
+                    sharedSection.classList.add('hidden');
+                    break;
+                case 'shared':
+                    pageTitle.textContent = "Shared Files";
+                    sharedSection.classList.remove('hidden');
+                    filesSection.classList.add('hidden');
+                    uploadSection.classList.add('hidden');
+                    break;
+                case 'starred':
+                    pageTitle.textContent = "Starred Files";
+                    // Would implement if we had starred files
+                    break;
+                case 'trash':
+                    pageTitle.textContent = "Trash";
+                    // Would implement if we had trash functionality
+                    break;
+            }
+        }
+        
+        // Claim storage
+        function claimStorage() {
+            usedStorage = 0;
+            localStorage.setItem('usedStorage', usedStorage);
+            updateStorageBar();
+            showToast('10GB storage claimed!');
+        }
+        
+        // Event Listeners
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+        
+        themeToggle.addEventListener('click', () => {
+            htmlElement.classList.toggle('dark');
+            
+            if (htmlElement.classList.contains('dark')) {
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                themeIcon.classList.add('fa-moon');
+                themeIcon.classList.remove('fa-sun');
+                localStorage.setItem('theme', 'light');
+            }
+        });
+        
+        signInBtn.addEventListener('click', () => {
+            signInModal.classList.remove('hidden');
+        });
+        
+        signUpBtn.addEventListener('click', () => {
+            signUpModal.classList.remove('hidden');
+        });
+        
+        closeSignInModal.addEventListener('click', () => {
+            signInModal.classList.add('hidden');
+        });
+        
+        closeSignUpModal.addEventListener('click', () => {
+            signUpModal.classList.add('hidden');
+        });
+        
+        showSignUpBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            signInModal.classList.add('hidden');
+            signUpModal.classList.remove('hidden');
+        });
+        
+        showSignInBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            signUpModal.classList.add('hidden');
+            signInModal.classList.remove('hidden');
+        });
+        
+        loginBtn.addEventListener('click', () => {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                showToast('Please enter email and password');
+                return;
+            }
+            
+            // Simulate sign in
+            isSignedIn = true;
+            currentUser = {
+                name: "John Doe",
+                email: email,
+                initials: "JD"
+            };
+            
+            localStorage.setItem('isSignedIn', 'true');
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            updateUserUI();
+            signInModal.classList.add('hidden');
+            showToast('Signed in successfully');
+        });
+        
+        signupBtn.addEventListener('click', () => {
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('signupConfirmPassword').value;
+            
+            if (!name || !email || !password || !confirmPassword) {
+                showToast('Please fill all fields');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showToast('Passwords do not match');
+                return;
+            }
+            
+            if (!document.getElementById('terms').checked) {
+                showToast('Please agree to the terms');
+                return;
+            }
+            
+            // Simulate sign up
+            isSignedIn = true;
+            currentUser = {
+                name: name,
+                email: email,
+                initials: name.charAt(0).toUpperCase()
+            };
+            
+            localStorage.setItem('isSignedIn', 'true');
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            updateUserUI();
+            signUpModal.classList.add('hidden');
+            showToast('Account created successfully');
+        });
+        
+        signOutBtn.addEventListener('click', () => {
+            isSignedIn = false;
+            currentUser = {
+                name: "Guest User",
+                email: "guest@freecloud.com",
+                initials: "G"
+            };
+            
+            localStorage.setItem('isSignedIn', 'false');
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            updateUserUI();
+            showToast('Signed out successfully');
+        });
+        
+        userActionsBtn.addEventListener('click', () => {
+            userActionsMenu.classList.toggle('hidden');
+        });
+        
+        // Close user menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!userActionsBtn.contains(e.target) && !userActionsMenu.contains(e.target)) {
+                userActionsMenu.classList.add('hidden');
+            }
+        });
+        
+        // Nav link clicks
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                setActivePage(link.dataset.page);
+            });
+        });
+        
+        claimStorageBtn.addEventListener('click', claimStorage);
+        dailyGiftBtn.addEventListener('click', claimStorage);
         
         // File input change
         fileInput.addEventListener('change', (e) => {
@@ -528,10 +912,16 @@
                 return;
             }
             
+            // Check storage
             let totalBytes = 0;
             filesToUpload.forEach(file => {
                 totalBytes += file.size;
             });
+            
+            if (usedStorage + totalBytes > MAX_STORAGE) {
+                showToast('Not enough storage space');
+                return;
+            }
             
             let uploadedBytes = 0;
             let progress = 0;
@@ -563,6 +953,10 @@
                             };
                             storedFiles.unshift(newFile);
                             localStorage.setItem('files', JSON.stringify(storedFiles));
+                            
+                            // Update storage
+                            usedStorage += file.size;
+                            localStorage.setItem('usedStorage', usedStorage);
                         };
                         reader.readAsDataURL(file);
                     });
@@ -570,6 +964,7 @@
                     setTimeout(() => {
                         showToast('Files uploaded successfully!');
                         renderFileList();
+                        updateStorageBar();
                         resetUploadUI();
                     }, 500);
                 }
@@ -633,8 +1028,8 @@
             }
         }, false);
         
-        // Initialize file list
-        renderFileList();
+        // Initialize app
+        initApp();
     </script>
 </body>
 </html>
