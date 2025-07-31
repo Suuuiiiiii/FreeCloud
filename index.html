@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreeCloud - Free File Hosting</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <style>
+        .file-upload-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+        .file-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                z-index: 50;
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+        }
+        #dropZone.highlight {
+            border-color: #3b82f6;
+            }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Mobile Menu Button -->
+    <div class="md:hidden fixed top-4 left-4 z-50">
+        <button id="menuToggle" class="p-2 rounded-md bg-white shadow-md">
+            <i class="fas fa-bars text-gray-700"></i>
+        </button>
+    </div>
+
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar w-64 bg-white shadow-lg fixed h-full">
+        <div class="p-4 border-b border-gray-200">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-cloud text-3xl text-blue-500"></i>
+                <h1 class="text-xl font-bold text-gray-800">FreeCloud</h1>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">100% Free File Hosting</p>
+        </div>
+        
+        <div class="p-4">
+            <div class="mb-6">
+                <div class="mb-4 p-3 bg-blue-50 rounded-lg">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium text-blue-700">Daily Gift</span>
+                        <span class="text-xs font-bold text-blue-600">10 GB FREE</span>
+                    </div>
+                    <p class="text-xs text-blue-600">Claim your 10GB daily storage - No limits!</p>
+                    <button id="claimStorageBtn" class="w-full mt-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700">
+                        Claim Now
+                    </button>
+                </div>
+            </div>
+            
+            <nav class="space-y-1">
+                <a href="#" class="flex items-center space-x-3 p-2 rounded-md bg-blue-50 text-blue-600">
+                    <i class="fas fa-home w-5"></i>
+                    <span>My Files</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 p-2 rounded-md text-gray-600 hover:bg-gray-100">
+                    <i class="fas fa-upload w-5"></i>
+                    <span>Upload</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 p-2 rounded-md text-gray-600 hover:bg-gray-100">
+                    <i class="fas fa-share-alt w-5"></i>
+                    <span>Shared</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 p-2 rounded-md text-gray-600 hover:bg-gray-100">
+                    <i class="fas fa-star w-5"></i>
+                    <span>Starred</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 p-2 rounded-md text-gray-600 hover:bg-gray-100">
+                    <i class="fas fa-trash w-5"></i>
+                    <span>Trash</span>
+                </a>
+            </nav>
+            
+            <div class="mt-8">
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Quick Access</h3>
+                <div class="space-y-1">
+                    <a href="#" class="flex items-center space-x-3 p-2 rounded-md text-gray-600 hover:bg-gray-100">
+                        <i class="fas fa-folder w-5 text-yellow-400"></i>
+                        <span>Documents</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 p-2 rounded-md text-gray-600 hover:bg-gray-100">
+                        <i class="fas fa-folder w-5 text-blue-400"></i>
+                        <span>Pictures</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 p-2 rounded-md text-gray-600 hover:bg-gray-100">
+                        <i class="fas fa-folder w-5 text-green-400"></i>
+                        <span>Videos</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+            <div class="flex items-center space-x-3">
+                <div id="userAvatar" class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">JD</div>
+                <div>
+                    <p id="userName" class="text-sm font-medium">John Doe</p>
+                    <p id="userStatus" class="text-xs text-gray-500">Free Account</p>
+                </div>
+                <button id="signOutBtn" class="ml-auto text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="md:ml-64">
+        <!-- Header -->
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
+                <h1 class="text-xl font-bold text-gray-800">My Files</h1>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <input type="text" id="searchInput" placeholder="Search files..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                    <button class="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- File Upload Section -->
+        <div class="file-upload-container">
+            <div class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div class="p-6 text-center">
+                        <i class="fas fa-cloud-upload-alt text-5xl text-blue-500 mb-4"></i>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">Upload Your Files</h2>
+                        <p class="text-gray-600 mb-6">Drag & drop files here or click to browse</p>
+                        
+                        <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 mb-6 cursor-pointer hover:border-blue-400 transition-colors">
+                            <input type="file" id="fileInput" class="hidden" multiple>
+                            <label for="fileInput" class="cursor-pointer">
+                                <div class="flex flex-col items-center justify-center">
+                                    <i class="fas fa-plus-circle text-3xl text-blue-500 mb-2"></i>
+                                    <p class="text-blue-500 font-medium">Select files to upload</p>
+                                    <p class="text-xs text-gray-500 mt-1">Maximum file size: 500 MB</p>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div id="uploadProgress" class="hidden">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-medium text-gray-600">Uploading...</span>
+                                <span id="uploadPercentage" class="text-sm font-medium text-blue-600">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full progress-bar" style="width: 0%"></div>
+                            </div>
+                            <div class="flex justify-between mt-1">
+                                <span id="uploadedSize" class="text-xs text-gray-500">0 MB</span>
+                                <span id="totalSize" class="text-xs text-gray-500">0 MB</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 flex justify-center space-x-3">
+                            <button id="uploadBtn" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                <i class="fas fa-upload mr-2"></i> Upload Now
+                            </button>
+                            <button id="shareLinkBtn" class="px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                <i class="fas fa-link mr-2"></i> Get Share Link
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Files List -->
+        <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-lg font-bold text-gray-800">Recent Files</h2>
+                        <div class="flex space-x-2">
+                            <button class="p-2 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200">
+                                <i class="fas fa-th"></i>
+                            </button>
+                            <button class="p-2 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200">
+                                <i class="fas fa-list"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="filesList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <!-- Files will be dynamically added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Free Forever Banner -->
+        <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 mb-8">
+            <div class="bg-gradient-to-r from-green-500 to-blue-500 rounded-xl shadow-lg overflow-hidden">
+                <div class="p-6 md:p-8 flex flex-col md:flex-row items-center justify-between">
+                    <div class="mb-4 md:mb-0">
+                        <h2 class="text-xl font-bold text-white mb-2">Free Forever - No Strings Attached!</h2>
+                        <p class="text-blue-100">Get 10GB free storage every day. No subscriptions, no payments, ever!</p>
+                    </div>
+                    <button id="dailyGiftBtn" class="px-6 py-3 bg-white text-green-600 font-medium rounded-md hover:bg-gray-100">
+                        <i class="fas fa-gift mr-2"></i> Claim Daily 10GB
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Link Modal -->
+    <div id="shareModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-gray-800">Share File</h3>
+                <button id="closeShareModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Share Link</label>
+                <div class="flex">
+                    <input type="text" id="shareLinkInput" class="flex-1 border border-gray-300 rounded-l-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
+                    <button id="copyLinkBtn" class="bg-blue-600 text-white px-4 py-2 rounded-r-md hover:bg-blue-700">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelShareBtn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button id="sendShareBtn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                    Send
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <div class="text-center mb-6">
+                <i class="fas fa-cloud text-5xl text-blue-500 mb-4"></i>
+                <h2 class="text-2xl font-bold text-gray-800">Welcome to FreeCloud</h2>
+                <p class="text-gray-600">Sign in to access your free 10GB storage</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="loginEmail" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="loginPassword" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button id="loginBtn" class="w-full py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                    Sign In
+                </button>
+                <button id="signupBtn" class="w-full py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                    Create New Account
+                </button>
+                <button id="anonymousLoginBtn" class="w-full py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                    Continue as Guest
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDz3QvQ0x3Q3Q3Q3Q3Q3Q3Q3Q3Q3Q3Q3Q3Q",
+            authDomain: "freecloud-demo.firebaseapp.com",
+            projectId: "freecloud-demo",
+            storageBucket: "freecloud-demo.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:3Q3Q3Q3Q3Q3Q3Q3Q3Q3Q3Q"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const storage = firebase.storage();
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM Elements
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadProgress = document.getElementById('uploadProgress');
+        const progressBar = document.getElementById('progressBar');
+        const uploadPercentage = document.getElementById('uploadPercentage');
+        const uploadedSize = document.getElementById('uploadedSize');
+        const totalSize = document.getElementById('totalSize');
+        const shareLinkBtn = document.getElementById('shareLinkBtn');
+        const shareModal = document.getElementById('shareModal');
+        const closeShareModal = document.getElementById('closeShareModal');
+        const shareLinkInput = document.getElementById('shareLinkInput');
+        const copyLinkBtn = document.getElementById('copyLinkBtn');
+        const cancelShareBtn = document.getElementById('cancelShareBtn');
+        const sendShareBtn = document.getElementById('sendShareBtn');
+        const filesList = document.getElementById('filesList');
+        const claimStorageBtn = document.getElementById('claimStorageBtn');
+        const dailyGiftBtn = document.getElementById('dailyGiftBtn');
+        const loginModal = document.getElementById('loginModal');
+        const loginBtn = document.getElementById('loginBtn');
+        const signupBtn = document.getElementById('signupBtn');
+        const anonymousLoginBtn = document.getElementById('anonymousLoginBtn');
+        const loginEmail = document.getElementById('loginEmail');
+        const loginPassword = document.getElementById('loginPassword');
+        const signOutBtn = document.getElementById('signOutBtn');
+        const userAvatar = document.getElementById('userAvatar');
+        const userName = document.getElementById('userName');
+        const userStatus = document.getElementById('userStatus');
+        const searchInput = document.getElementById('searchInput');
+
+        // Global variables
+        let currentUser = null;
+        let filesToUpload = [];
+        let currentFileShareUrl = '';
+
+        // Initialize the app
+        function initApp() {
+            // Check auth state
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    // User is signed in
+                    currentUser = user;
+                    updateUserUI(user);
+                    loginModal.classList.add('hidden');
+                    loadUserFiles();
+                } else {
+                    // No user is signed in
+                    currentUser = null;
+                    loginModal.classList.remove('hidden');
+                    filesList.innerHTML = '';
+                }
+            });
+        }
+
+        // Update user UI
+        function updateUserUI(user) {
+            if (user.isAnonymous) {
+                userName.textContent = 'Guest User';
+                userStatus.textContent = 'Temporary Account';
+                userAvatar.textContent = 'GU';
+            } else {
+                const displayName = user.displayName || user.email.split('@')[0];
+                userName.textContent = displayName;
+                userStatus.textContent = 'Free Account';
+                userAvatar.textContent = displayName.charAt(0).toUpperCase();
+            }
+        }
+
+        // Load user files from Firestore
+        function loadUserFiles() {
+            if (!currentUser) return;
+            
+            filesList.innerHTML = '<div class="col-span-full text-center py-8"><i class="fas fa-spinner fa-spin text-2xl text-blue-500"></i><p class="mt-2 text-gray-600">Loading files...</p></div>';
+            
+            db.collection('users').doc(currentUser.uid).collection('files')
+                .orderBy('uploadedAt', 'desc')
+                .get()
+                .then(querySnapshot => {
+                    filesList.innerHTML = '';
+                    
+                    if (querySnapshot.empty) {
+                        filesList.innerHTML = '<div class="col-span-full text-center py-8"><i class="fas fa-folder-open text-2xl text-gray-400"></i><p class="mt-2 text-gray-600">No files uploaded yet</p></div>';
+                        return;
+                    }
+                    
+                    querySnapshot.forEach(doc => {
+                        const file = doc.data();
+                        renderFileItem(file);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading files:', error);
+                    filesList.innerHTML = '<div class="col-span-full text-center py-8"><i class="fas fa-exclamation-triangle text-2xl text-red-500"></i><p class="mt-2 text-gray-600">Error loading files</p></div>';
+                });
+        }
+
+        // Render a file item
+        function renderFileItem(file) {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-all';
+            
+            const fileIcon = getFileIcon(file.type);
+            const fileSize = formatFileSize(file.size);
+            
+            fileItem.innerHTML = `
+                <div class="p-4">
+                    <div class="flex items-center mb-3">
+                        <div class="w-10 h-10 rounded-full ${fileIcon.color} flex items-center justify-center text-white mr-3">
+                            <i class="${fileIcon.icon}"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-800 truncate">${file.name}</p>
+                            <p class="text-xs text-gray-500">${fileSize}</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-gray-500">${new Date(file.uploadedAt).toLocaleDateString()}</span>
+                        <div class="flex space-x-2">
+                            <button class="file-download-btn p-1 text-blue-500 hover:text-blue-700" data-url="${file.url}">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button class="file-share-btn p-1 text-green-500 hover:text-green-700" data-url="${file.url}">
+                                <i class="fas fa-share-alt"></i>
+                            </button>
+                            <button class="file-delete-btn p-1 text-red-500 hover:text-red-700" data-id="${file.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            filesList.appendChild(fileItem);
+            
+            // Add event listeners to buttons
+            fileItem.querySelector('.file-download-btn').addEventListener('click', (e) => {
+                downloadFile(e.target.getAttribute('data-url'));
+            });
+            
+            fileItem.querySelector('.file-share-btn').addEventListener('click', (e) => {
+                showShareModal(e.target.getAttribute('data-url'));
+            });
+            
+            fileItem.querySelector('.file-delete-btn').addEventListener('click', (e) => {
+                deleteFile(e.target.getAttribute('data-id'));
+            });
+        }
+
+        // Get appropriate file icon
+        function getFileIcon(fileType) {
+            const type = fileType.split('/')[0];
+            
+            const icons = {
+                image: { icon: 'fas fa-image', color: 'bg-blue-400' },
+                video: { icon: 'fas fa-video', color: 'bg-red-400' },
+                audio: { icon: 'fas fa-music', color: 'bg-purple-400' },
+                text: { icon: 'fas fa-file-alt', color: 'bg-green-400' },
+                application: { icon: 'fas fa-file', color: 'bg-yellow-400' }
+            };
+            
+            return icons[type] || { icon: 'fas fa-file', color: 'bg-gray-400' };
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Upload files to Firebase Storage
+        function uploadFiles() {
+            if (!currentUser || filesToUpload.length === 0) return;
+            
+            uploadProgress.classList.remove('hidden');
+            dropZone.classList.add('hidden');
+            
+            let totalBytes = 0;
+            filesToUpload.forEach(file => {
+                totalBytes += file.size;
+            });
+            
+            totalSize.textContent = formatFileSize(totalBytes);
+            
+            let uploadedBytes = 0;
+            const uploadPromises = [];
+            
+            filesToUpload.forEach(file => {
+                const storageRef = storage.ref(`users/${currentUser.uid}/files/${file.name}`);
+                const uploadTask = storageRef.put(file);
+                
+                uploadPromises.push(
+                    new Promise((resolve, reject) => {
+                        uploadTask.on('state_changed',
+                            (snapshot) => {
+                                // Update progress
+                                uploadedBytes += snapshot.bytesTransferred;
+                                const progress = (uploadedBytes / totalBytes) * 100;
+                                progressBar.style.width = `${progress}%`;
+                                uploadPercentage.textContent = `${Math.round(progress)}%`;
+                                uploadedSize.textContent = formatFileSize(uploadedBytes);
+                            },
+                            (error) => {
+                                console.error('Upload error:', error);
+                                reject(error);
+                            },
+                            () => {
+                                // Upload complete
+                                uploadTask.snapshot.ref.getDownloadURL().then(downloadURL => {
+                                    // Save file metadata to Firestore
+                                    db.collection('users').doc(currentUser.uid).collection('files').add({
+                                        id: uploadTask.snapshot.ref.name,
+                                        name: file.name,
+                                        type: file.type,
+                                        size: file.size,
+                                        url: downloadURL,
+                                        uploadedAt: new Date().toISOString()
+                                    }).then(() => {
+                                        resolve();
+                                    }).catch(error => {
+                                        console.error('Error saving file metadata:', error);
+                                        reject(error);
+                                    });
+                                });
+                            }
+                        );
+                    })
+                );
+            });
+            
+            Promise.all(uploadPromises)
+                .then(() => {
+                    showToast('Files uploaded successfully!', 'success');
+                    resetUploadUI();
+                    loadUserFiles();
+                })
+                .catch(error => {
+                    showToast('Error uploading files', 'error');
+                    console.error('Upload error:', error);
+                    resetUploadUI();
+                });
+        }
+
+        // Download file
+        function downloadFile(url) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = url.split('/').pop();
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // Delete file
+        function deleteFile(fileId) {
+            if (!confirm('Are you sure you want to delete this file?')) return;
+            
+            // Delete from storage
+            const storageRef = storage.ref(`users/${currentUser.uid}/files/${fileId}`);
+            storageRef.delete()
+                .then(() => {
+                    // Delete from Firestore
+                    return db.collection('users').doc(currentUser.uid).collection('files')
+                        .where('id', '==', fileId)
+                        .get()
+                        .then(querySnapshot => {
+                            querySnapshot.forEach(doc => {
+                                doc.ref.delete();
+                            });
+                        });
+                })
+                .then(() => {
+                    showToast('File deleted successfully', 'success');
+                    loadUserFiles();
+                })
+                .catch(error => {
+                    showToast('Error deleting file', 'error');
+                    console.error('Error deleting file:', error);
+                });
+        }
+
+        // Show share modal
+        function showShareModal(url) {
+            currentFileShareUrl = url;
+            shareLinkInput.value = url;
+            shareModal.classList.remove('hidden');
+        }
+
+        // Close share modal
+        function closeShareModalHandler() {
+            shareModal.classList.add('hidden');
+            currentFileShareUrl = '';
+        }
+
+        // Copy share link
+        function copyShareLink() {
+            shareLinkInput.select();
+            document.execCommand('copy');
+            showToast('Link copied to clipboard!', 'success');
+        }
+
+        // Send share link (simulated)
+        function sendShareLink() {
+            showToast('Share link sent!', 'success');
+            closeShareModalHandler();
+        }
+
+        // Claim storage (simulated)
+        function claimStorage() {
+            showToast('10GB storage claimed!', 'success');
+        }
+
+        // Reset upload UI
+        function resetUploadUI() {
+            fileInput.value = '';
+            filesToUpload = [];
+            progressBar.style.width = '0%';
+            uploadPercentage.textContent = '0%';
+            uploadedSize.textContent = '0 Bytes';
+            uploadProgress.classList.add('hidden');
+            dropZone.classList.remove('hidden');
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 px-4 py-2 rounded-md shadow-md text-white ${
+                type === 'success' ? 'bg-green-500' : 
+                type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+            }`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+        // Event Listeners
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            filesToUpload = Array.from(e.target.files);
+            
+            if (filesToUpload.length > 0) {
+                // Show file info
+                let totalBytes = 0;
+                filesToUpload.forEach(file => {
+                    totalBytes += file.size;
+                });
+                
+                totalSize.textContent = formatFileSize(totalBytes);
+                dropZone.classList.add('hidden');
+                uploadProgress.classList.remove('hidden');
+            }
+        });
+
+        uploadBtn.addEventListener('click', uploadFiles);
+
+        shareLinkBtn.addEventListener('click', () => {
+            if (filesToUpload.length === 0) {
+                showToast('Please select files first', 'error');
+                return;
+            }
+            showToast('Files need to be uploaded first to get share link', 'info');
+        });
+
+        closeShareModal.addEventListener('click', closeShareModalHandler);
+        cancelShareBtn.addEventListener('click', closeShareModalHandler);
+        copyLinkBtn.addEventListener('click', copyShareLink);
+        sendShareBtn.addEventListener('click', sendShareLink);
+        claimStorageBtn.addEventListener('click', claimStorage);
+        dailyGiftBtn.addEventListener('click', claimStorage);
+
+        // Drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            dropZone.classList.add('highlight');
+        }
+
+        function unhighlight() {
+            dropZone.classList.remove('highlight');
+        }
+
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            filesToUpload = Array.from(dt.files);
+            
+            if (filesToUpload.length > 0) {
+                // Show file info
+                let totalBytes = 0;
+                filesToUpload.forEach(file => {
+                    totalBytes += file.size;
+                });
+                
+                totalSize.textContent = formatFileSize(totalBytes);
+                dropZone.classList.add('hidden');
+                uploadProgress.classList.remove('hidden');
+            }
+        }
+
+        // Auth handlers
+        loginBtn.addEventListener('click', () => {
+            const email = loginEmail.value;
+            const password = loginPassword.value;
+            
+            if (!email || !password) {
+                showToast('Please enter email and password', 'error');
+                return;
+            }
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    showToast('Signed in successfully', 'success');
+                })
+                .catch(error => {
+                    showToast('Error signing in: ' + error.message, 'error');
+                });
+        });
+
+        signupBtn.addEventListener('click', () => {
+            const email = loginEmail.value;
+            const password = loginPassword.value;
+            
+            if (!email || !password) {
+                showToast('Please enter email and password', 'error');
+                return;
+            }
+            
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(() => {
+                    showToast('Account created successfully', 'success');
+                })
+                .catch(error => {
+                    showToast('Error creating account: ' + error.message, 'error');
+                });
+        });
+
+        anonymousLoginBtn.addEventListener('click', () => {
+            auth.signInAnonymously()
+                .then(() => {
+                    showToast('Signed in as guest', 'success');
+                })
+                .catch(error => {
+                    showToast('Error signing in as guest: ' + error.message, 'error');
+                });
+        });
+
+        signOutBtn.addEventListener('click', () => {
+            auth.signOut()
+                .then(() => {
+                    showToast('Signed out successfully', 'success');
+                })
+                .catch(error => {
+                    showToast('Error signing out: ' + error.message, 'error');
+                });
+        });
+
+        // Search functionality
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const fileItems = filesList.querySelectorAll('.file-item');
+            
+            fileItems.forEach(item => {
+                const fileName = item.querySelector('.text-gray-800').textContent.toLowerCase();
+                if (fileName.includes(searchTerm)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+
+        // Initialize the app
+        initApp();
+    </script>
+</body>
+</html>
